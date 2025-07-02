@@ -10,7 +10,6 @@ const VolzaCSVAnalyzer = () => {
   const [isAnalyzing, setIsAnalyzing] = useState(false)
   const [downloadUrl, setDownloadUrl] = useState(null)
   const fileInputRef = useRef(null)
-  const [processedFiles, setProcessedFiles] = useState([])
 
   const toggleDarkMode = () => setIsDarkMode(!isDarkMode)
 
@@ -40,6 +39,7 @@ const VolzaCSVAnalyzer = () => {
   const uploadToS3ViaPresignedURL = async (file) => {
     try {
       setIsAnalyzing(true)
+
       const res = await fetch("https://6au9w43e09.execute-api.us-west-2.amazonaws.com/prod/get-upload-url", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -56,11 +56,16 @@ const VolzaCSVAnalyzer = () => {
         body: file,
       })
 
-      // Store the uploaded file name for later download
-      setDownloadUrl(file.name) // We'll use this to store the file name
-      alert("Upload successful. Processing started.")
+      // Extract base name without extension (case-insensitive)
+      const baseName = file.name.replace(/\.csv$/i, "")
+      const analyzedFileName = `${baseName}_analyzed.csv`
+
+      // Set processed file name for later download
+      setDownloadUrl(analyzedFileName)
+
+      alert("✅ Upload successful. Processing started.")
     } catch (error) {
-      console.error("Upload failed:", error)
+      console.error("❌ Upload failed:", error)
       alert("Upload failed")
     } finally {
       setIsAnalyzing(false)
@@ -72,80 +77,76 @@ const VolzaCSVAnalyzer = () => {
   }
 
   const handleDownload = async () => {
-  if (!downloadUrl || !downloadUrl.trim()) {
-    alert("❌ No file selected. Please upload a file first.");
-    return;
-  }
-
-  const API_ENDPOINT = "https://6au9w43e09.execute-api.us-west-2.amazonaws.com/prod/get-download-url";
-
-  const payload = {
-    action: "download",
-    fileName: downloadUrl.trim()
-  };
-
-  try {
-    const response = await fetch(API_ENDPOINT, {
-      method: "POST",
-      headers: { 
-        "Content-Type": "application/json",
-        Accept: "application/json"
-      },
-      body: JSON.stringify(payload)
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(JSON.parse(errorText).error || "Download failed.");
+    if (!downloadUrl || !downloadUrl.trim()) {
+      alert("❌ No file selected. Please upload a file first.")
+      return
     }
 
-    const result = await response.json();
+    const API_ENDPOINT = "https://6au9w43e09.execute-api.us-west-2.amazonaws.com/prod/get-download-url"
+    const fileName = downloadUrl.trim()
 
-    if (!result.downloadUrl) {
-      throw new Error("Download URL missing in response.");
+    const payload = {
+      action: "download",
+      fileName,
     }
 
-    const link = document.createElement("a");
-    link.href = result.downloadUrl;
-    link.download = result.fileName || "downloaded_file.csv";
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    try {
+      console.log("📦 Download request for fileName:", fileName)
 
-  } catch (error) {
-    console.error("🔥 Download Failed:", error);
-    alert(`🚨 Download failed: ${error.message}`);
+      const response = await fetch(API_ENDPOINT, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify(payload),
+      })
+
+      if (!response.ok) {
+        const errorText = await response.text()
+        let errorMessage = "Download failed."
+        try {
+          const errorJson = JSON.parse(errorText)
+          errorMessage = errorJson.error || errorMessage
+        } catch {}
+        throw new Error(errorMessage)
+      }
+
+      const result = await response.json()
+
+      if (!result.downloadUrl) {
+        throw new Error("Download URL missing in response.")
+      }
+
+      // Trigger download
+      const link = document.createElement("a")
+      link.href = result.downloadUrl
+      link.download = result.fileName || fileName
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+    } catch (error) {
+      console.error("🔥 Download Failed:", error)
+      alert(`🚨 Download failed: ${error.message}`)
+    }
   }
-};
 
   return (
     <div className={`${styles.container} ${isDarkMode ? styles.dark : styles.light}`}>
-      {/* Header */}
       <header className={styles.header}>
         <div className={styles.headerContent}>
-          {/* Logo */}
           <div className={styles.logo}>
             <BarChart3 size={32} color="#2563eb" />
             <span className={styles.logoText}>Volza Automation</span>
           </div>
 
-          {/* Navigation */}
           <nav className={styles.nav}>
-            <a href="#" className={styles.navLink}>
-              Home
-            </a>
-            <a href="#" className={styles.navLink}>
-              Features
-            </a>
-            <a href="#" className={styles.navLink}>
-              Pricing
-            </a>
-            <a href="#" className={styles.navLink}>
-              Contact
-            </a>
+            <a href="#" className={styles.navLink}>Home</a>
+            <a href="#" className={styles.navLink}>Features</a>
+            <a href="#" className={styles.navLink}>Pricing</a>
+            <a href="#" className={styles.navLink}>Contact</a>
           </nav>
 
-          {/* Right side buttons */}
           <div className={styles.headerActions}>
             <button onClick={toggleDarkMode} className={styles.themeToggle} aria-label="Toggle dark mode">
               {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
@@ -155,14 +156,12 @@ const VolzaCSVAnalyzer = () => {
         </div>
       </header>
 
-      {/* Main Content */}
       <main className={styles.main}>
         <div className={styles.titleSection}>
           <h1 className={styles.title}>Upload CSV for Data Analysis</h1>
         </div>
 
         <div className={styles.content}>
-          {/* Upload Section */}
           <div className={styles.card}>
             <div className={styles.cardContent}>
               <div
@@ -191,7 +190,6 @@ const VolzaCSVAnalyzer = () => {
             </div>
           </div>
 
-          {/* Download Section */}
           <div className={styles.downloadSection}>
             <button
               onClick={handleDownload}
