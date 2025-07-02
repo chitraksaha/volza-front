@@ -182,7 +182,7 @@ const VolzaCSVAnalyzer = () => {
               </div>
               <input
                 ref={fileInputRef}
-                type="file"
+                type="file"cd 
                 accept=".csv"
                 onChange={handleFileUpload}
                 style={{ display: "none" }}
