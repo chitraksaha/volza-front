@@ -3,25 +3,33 @@
 # dependencies
 /node_modules
 /.pnp
+<<<<<<< HEAD
 .pnp.*
 .yarn/*
 !.yarn/patches
 !.yarn/plugins
 !.yarn/releases
 !.yarn/versions
+=======
+.pnp.js
+>>>>>>> 67da50482ebbaaf51a16ad787b4f77f1ddf79273
 
 # testing
 /coverage
 
+<<<<<<< HEAD
 # next.js
 /.next/
 /out/
 
+=======
+>>>>>>> 67da50482ebbaaf51a16ad787b4f77f1ddf79273
 # production
 /build
 
 # misc
 .DS_Store
+<<<<<<< HEAD
 *.pem
 
 # debug
@@ -39,3 +47,13 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+=======
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+>>>>>>> 67da50482ebbaaf51a16ad787b4f77f1ddf79273
